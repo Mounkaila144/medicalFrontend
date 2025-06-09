@@ -1,0 +1,1656 @@
+{
+  "info": {
+    "name": "Medical API - Structured",
+    "description": "Organized Medical API collection with logical structure",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "practitionerAccessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "practitionerRefreshToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tenantId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "patientId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "appointmentId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "encounterId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "invoiceId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "reportId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "⚙️ Authentication",
+      "item": [
+        {
+          "name": "👤 User Authentication",
+          "item": [
+            {
+              "name": "Login SuperAdmin",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"password123\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "login"]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    const response = pm.response.json();",
+                      "    pm.collectionVariables.set('accessToken', response.accessToken);",
+                      "    pm.collectionVariables.set('refreshToken', response.refreshToken);",
+                      "    if (response.user && response.user.tenantId) {",
+                      "        pm.collectionVariables.set('tenantId', response.user.tenantId);",
+                      "    }",
+                      "    if (response.user && response.user.id) {",
+                      "        pm.collectionVariables.set('userId', response.user.id);",
+                      "    }",
+                      "}"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Login Clinique proprietaire",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"admin@clinique-exemple.com\",\n  \"password\": \"password123\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "login"]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    const response = pm.response.json();",
+                      "    pm.collectionVariables.set('accessToken', response.accessToken);",
+                      "    pm.collectionVariables.set('refreshToken', response.refreshToken);",
+                      "    if (response.user && response.user.tenantId) {",
+                      "        pm.collectionVariables.set('tenantId', response.user.tenantId);",
+                      "    }",
+                      "    if (response.user && response.user.id) {",
+                      "        pm.collectionVariables.set('userId', response.user.id);",
+                      "    }",
+                      "}"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Refresh Token",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{refreshToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/refresh",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "refresh"]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    const response = pm.response.json();",
+                      "    pm.collectionVariables.set('accessToken', response.accessToken);",
+                      "    if (response.refreshToken) {",
+                      "        pm.collectionVariables.set('refreshToken', response.refreshToken);",
+                      "    }",
+                      "}"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Logout",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/logout",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "logout"]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    pm.collectionVariables.set('accessToken', '');",
+                      "    pm.collectionVariables.set('refreshToken', '');",
+                      "}"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "👨‍⚕️ Practitioner Authentication",
+          "item": [
+            {
+              "name": "Practitioner Login",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    const response = pm.response.json();",
+                      "    pm.collectionVariables.set('practitionerAccessToken', response.accessToken);",
+                      "    pm.collectionVariables.set('practitionerRefreshToken', response.refreshToken);",
+                      "    pm.test('Login successful', () => {",
+                      "        pm.expect(response).to.have.property('accessToken');",
+                      "        pm.expect(response).to.have.property('practitioner');",
+                      "    });",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"sarah.johnson@clinic.com\",\n  \"password\": \"practitioner123\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/practitioner/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "practitioner", "login"]
+                }
+              }
+            },
+            {
+              "name": "Get Practitioner Profile",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{practitionerAccessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/practitioner/profile",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "practitioner", "profile"]
+                }
+              }
+            },
+            {
+              "name": "Practitioner Refresh Token",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    const response = pm.response.json();",
+                      "    pm.collectionVariables.set('practitionerAccessToken', response.accessToken);",
+                      "    pm.collectionVariables.set('practitionerRefreshToken', response.refreshToken);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"refreshToken\": \"{{practitionerRefreshToken}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/practitioner/refresh",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "practitioner", "refresh"]
+                }
+              }
+            },
+            {
+              "name": "Practitioner Logout",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"refreshToken\": \"{{practitionerRefreshToken}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/practitioner/logout",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "practitioner", "logout"]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "👥 User Management",
+      "item": [
+        {
+          "name": "Get Tenants",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/tenants",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "tenants"]
+            }
+          }
+        },
+        {
+          "name": "Get Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["users"]
+            }
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Updated Name\",\n  \"lastName\": \"Updated Last\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{userId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "👨‍⚕️ Practitioners",
+      "item": [
+        {
+          "name": "Create Practitioner",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Dr. Sarah\",\n  \"lastName\": \"Johnson\",\n  \"speciality\": \"CARDIOLOGY\",\n  \"email\": \"dr.johnson@clinic.com\",\n  \"phoneNumber\": \"+1234567890\",\n  \"workingHours\": [\n    {\n      \"dayOfWeek\": \"MONDAY\",\n      \"slots\": [\n        {\n          \"start\": \"09:00\",\n          \"end\": \"17:00\"\n        }\n      ]\n    },\n    {\n      \"dayOfWeek\": \"TUESDAY\",\n      \"slots\": [\n        {\n          \"start\": \"09:00\",\n          \"end\": \"17:00\"\n        }\n      ]\n    },\n    {\n      \"dayOfWeek\": \"WEDNESDAY\",\n      \"slots\": [\n        {\n          \"start\": \"09:00\",\n          \"end\": \"17:00\"\n        }\n      ]\n    },\n    {\n      \"dayOfWeek\": \"THURSDAY\",\n      \"slots\": [\n        {\n          \"start\": \"09:00\",\n          \"end\": \"17:00\"\n        }\n      ]\n    },\n    {\n      \"dayOfWeek\": \"FRIDAY\",\n      \"slots\": [\n        {\n          \"start\": \"09:00\",\n          \"end\": \"17:00\"\n        }\n      ]\n    }\n  ],\n  \"slotDuration\": 30,\n  \"color\": \"#FF5733\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/practitioners",
+              "host": ["{{baseUrl}}"],
+              "path": ["practitioners"]
+            }
+          }
+        },
+        {
+          "name": "Get All Practitioners",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/practitioners",
+              "host": ["{{baseUrl}}"],
+              "path": ["practitioners"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "👤 Patients",
+      "item": [
+        {
+          "name": "Patient Operations",
+          "item": [
+            {
+              "name": "Create Patient",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"clinicId\": \"{{tenantId}}\",\n  \"mrn\": \"MRN-001\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"dob\": \"1990-01-15\",\n  \"gender\": \"M\",\n  \"bloodType\": \"O_POSITIVE\",\n  \"phone\": \"+1234567890\",\n  \"email\": \"john.doe@email.com\",\n  \"address\": {\n    \"street\": \"123 Main St\",\n    \"city\": \"New York\",\n    \"state\": \"NY\",\n    \"zipCode\": \"10001\",\n    \"country\": \"USA\"\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/patients",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["patients"]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201) {",
+                      "    const response = pm.response.json();",
+                      "    pm.collectionVariables.set('patientId', response.id);",
+                      "}"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Get All Patients",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/patients",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["patients"]
+                }
+              }
+            },
+            {
+              "name": "Search Patients",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/patients/search?search=John",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["patients", "search"],
+                  "query": [
+                    {
+                      "key": "search",
+                      "value": "John",
+                      "description": "Recherche générale par nom, prénom, MRN ou email"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Patient by ID",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/patients/{{patientId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["patients", "{{patientId}}"]
+                }
+              }
+            },
+            {
+              "name": "Update Patient",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"phone\": \"+1234567899\",\n  \"email\": \"john.doe.updated@email.com\",\n  \"address\": {\n    \"street\": \"456 Updated St\",\n    \"city\": \"New York\",\n    \"state\": \"NY\",\n    \"zipCode\": \"10002\",\n    \"country\": \"USA\"\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/patients/{{patientId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["patients", "{{patientId}}"]
+                }
+              }
+            },
+            {
+              "name": "Delete Patient",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/patients/{{patientId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["patients", "{{patientId}}"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "📄 Patient Documents",
+          "item": [
+            {
+              "name": "Upload Patient Document",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "src": [],
+                      "description": "Sélectionnez un fichier à uploader"
+                    },
+                    {
+                      "key": "patientId",
+                      "value": "{{patientId}}",
+                      "type": "text"
+                    },
+                    {
+                      "key": "docType",
+                      "value": "ORDONNANCE",
+                      "type": "text"
+                    },
+                    {
+                      "key": "uploadedBy",
+                      "value": "{{userId}}",
+                      "type": "text"
+                    },
+                    {
+                      "key": "tags",
+                      "value": "medical,prescription",
+                      "type": "text",
+                      "description": "Tags séparés par des virgules"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/patients/documents/upload",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["patients", "documents", "upload"]
+                }
+              }
+            },
+            {
+              "name": "Get Patient Documents",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/patients/documents/patient/{{patientId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["patients", "documents", "patient", "{{patientId}}"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "📋 Medical History",
+          "item": [
+            {
+              "name": "Get Patient Medical History",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/patients/medical-history/patient/{{patientId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["patients", "medical-history", "patient", "{{patientId}}"]
+                }
+              }
+            },
+            {
+              "name": "Add Medical History Entry",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"type\": \"ALLERGY\",\n  \"label\": \"Penicillin\",\n  \"note\": \"Patient reported severe reaction to penicillin\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/patients/medical-history",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["patients", "medical-history"]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "📅 Scheduling",
+      "item": [
+        {
+          "name": "🗓️ Appointments",
+          "item": [
+            {
+              "name": "Create Appointment",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"practitionerId\": \"b84141c5-8d0e-4b80-9da7-d5f6b2812daa\",\n  \"startAt\": \"2024-02-15T10:00:00Z\",\n  \"endAt\": \"2024-02-15T10:30:00Z\",\n  \"room\": \"Room 101\",\n  \"reason\": \"Regular checkup appointment\",\n  \"urgency\": \"ROUTINE\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/appointments",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["appointments"]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201) {",
+                      "    const response = pm.response.json();",
+                      "    pm.collectionVariables.set('appointmentId', response.id);",
+                      "}"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Get All Appointments",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/appointments?date=2024-02-15",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["appointments"],
+                  "query": [
+                    {
+                      "key": "date",
+                      "value": "2024-02-15"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Appointment by ID",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/appointments/{{appointmentId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["appointments", "{{appointmentId}}"]
+                }
+              }
+            },
+            {
+              "name": "Update Appointment",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"startAt\": \"2024-02-15T11:00:00Z\",\n  \"endAt\": \"2024-02-15T11:30:00Z\",\n  \"reason\": \"Updated appointment time\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/appointments/{{appointmentId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["appointments", "{{appointmentId}}"]
+                }
+              }
+            },
+            {
+              "name": "Cancel Appointment",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"cancellationReason\": \"Patient requested cancellation\",\n  \"notifyPatient\": true\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/appointments/{{appointmentId}}/cancel",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["appointments", "{{appointmentId}}", "cancel"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "⏳ Wait Queue",
+          "item": [
+            {
+              "name": "Add to Wait Queue",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"practitionerId\": \"b84141c5-8d0e-4b80-9da7-d5f6b2812daa\",\n  \"priority\": \"NORMAL\",\n  \"reason\": \"Walk-in consultation\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/wait-queue",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["wait-queue"]
+                }
+              }
+            },
+            {
+              "name": "Get Wait Queue",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/wait-queue",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["wait-queue"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "👨‍⚕️ Practitioner Schedule",
+          "item": [
+            {
+              "name": "Get Today's Appointments",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{practitionerAccessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/practitioner/schedule/appointments",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["practitioner", "schedule", "appointments"]
+                }
+              }
+            },
+            {
+              "name": "Get Appointments by Date",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{practitionerAccessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/practitioner/schedule/appointments?date=2024-02-15",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["practitioner", "schedule", "appointments"],
+                  "query": [
+                    {
+                      "key": "date",
+                      "value": "2024-02-15"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Weekly Appointments",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{practitionerAccessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/practitioner/schedule/appointments/week",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["practitioner", "schedule", "appointments", "week"]
+                }
+              }
+            },
+            {
+              "name": "Get Monthly Appointments",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{practitionerAccessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/practitioner/schedule/appointments/month",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["practitioner", "schedule", "appointments", "month"]
+                }
+              }
+            },
+            {
+              "name": "Get Appointment by ID",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{practitionerAccessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/practitioner/schedule/appointments/{{appointmentId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["practitioner", "schedule", "appointments", "{{appointmentId}}"]
+                }
+              }
+            },
+            {
+              "name": "Get Availability",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{practitionerAccessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/practitioner/schedule/availability",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["practitioner", "schedule", "availability"]
+                }
+              }
+            },
+            {
+              "name": "Get Statistics",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{practitionerAccessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/practitioner/schedule/stats",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["practitioner", "schedule", "stats"]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "🏥 EHR (Medical Records)",
+      "item": [
+        {
+          "name": "📝 Encounters",
+          "item": [
+            {
+              "name": "Create Encounter",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"practitionerId\": \"b84141c5-8d0e-4b80-9da7-d5f6b2812daa\",\n  \"startAt\": \"2024-06-03T10:00:00.000Z\",\n  \"motive\": \"Patient reports chest pain\",\n  \"exam\": \"Normal heart sounds, no murmurs detected. Vital signs: BP 120/80, HR 72, Temp 98.6°F, RR 16, O2 Sat 98%\",\n  \"diagnosis\": \"Possible anxiety-related chest pain\",\n  \"icd10Codes\": [\"R06.02\", \"F41.9\"]\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/encounters",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["encounters"]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201) {",
+                      "    const response = pm.response.json();",
+                      "    pm.collectionVariables.set('encounterId', response.id);",
+                      "}"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Get All Encounters",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/encounters?patientId={{patientId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["encounters"],
+                  "query": [
+                    {
+                      "key": "patientId",
+                      "value": "{{patientId}}"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Encounter by ID",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/encounters/{{encounterId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["encounters", "{{encounterId}}"]
+                }
+              }
+            },
+            {
+              "name": "Update Encounter",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"COMPLETED\",\n  \"assessment\": \"Updated assessment: Anxiety-related chest pain confirmed\",\n  \"plan\": \"Prescribed mild anxiolytic, follow-up in 2 weeks\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/encounters/{{encounterId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["encounters", "{{encounterId}}"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "💊 Prescriptions",
+          "item": [
+            {
+              "name": "Create Prescription",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"encounterId\": \"{{encounterId}}\",\n  \"practitionerId\": \"b84141c5-8d0e-4b80-9da7-d5f6b2812daa\",\n  \"expiresAt\": \"2024-07-03T10:00:00.000Z\",\n  \"items\": [\n    {\n      \"medication\": \"Lorazepam\",\n      \"dosage\": \"0.5mg\",\n      \"frequency\": \"Twice daily as needed\",\n      \"duration\": \"30 days\",\n      \"instructions\": \"Take as needed for anxiety, do not exceed 2 doses per day\"\n    }\n  ]\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/prescriptions",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["prescriptions"]
+                }
+              }
+            },
+            {
+              "name": "Get Prescriptions",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/prescriptions",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["prescriptions"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "🧪 Lab Results",
+          "item": [
+            {
+              "name": "Create Lab Result",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"encounterId\": \"{{encounterId}}\",\n  \"labName\": \"Complete Blood Count\",\n  \"result\": {\n    \"WBC\": \"7.2 K/uL\",\n    \"RBC\": \"4.5 M/uL\",\n    \"Hemoglobin\": \"14.2 g/dL\",\n    \"Hematocrit\": \"42.1%\",\n    \"Platelets\": \"250 K/uL\"\n  },\n  \"receivedAt\": \"2024-06-03T08:00:00.000Z\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/labs",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["labs"]
+                }
+              }
+            },
+            {
+              "name": "Get Lab Results",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/labs",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["labs"]
+                }
+              }
+            },
+            {
+              "name": "Get Lab Results by Patient",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/labs/patient/{{patientId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["labs", "patient", "{{patientId}}"]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "💵 Billing",
+      "item": [
+        {
+          "name": "💰 Tariffs",
+          "item": [
+            {
+              "name": "Create Tariff",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"code\": \"CONSULT-001\",\n  \"label\": \"General Consultation\",\n  \"category\": \"CONSULTATION\",\n  \"price\": 150.00\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/tariffs",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["tariffs"]
+                }
+              }
+            },
+            {
+              "name": "Get All Tariffs",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/tariffs",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["tariffs"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "🧾 Invoices",
+          "item": [
+            {
+              "name": "Create Invoice",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"encounterId\": \"{{encounterId}}\",\n  \"number\": \"INV-001\",\n  \"dueAt\": \"2024-07-15T00:00:00.000Z\",\n  \"issueDate\": \"2024-06-03T00:00:00.000Z\",\n  \"notes\": \"Payment due within 30 days\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/invoices",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["invoices"]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201) {",
+                      "    const response = pm.response.json();",
+                      "    pm.collectionVariables.set('invoiceId', response.id);",
+                      "}"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Add Invoice Line",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"invoiceId\": \"{{invoiceId}}\",\n  \"description\": \"General Consultation\",\n  \"qty\": 1,\n  \"unitPrice\": 150.00,\n  \"tax\": 15.00,\n  \"thirdPartyRate\": 0\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/invoices/line",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["invoices", "line"]
+                }
+              }
+            },
+            {
+              "name": "Get All Invoices",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/invoices?patientId={{patientId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["invoices"],
+                  "query": [
+                    {
+                      "key": "patientId",
+                      "value": "{{patientId}}"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Invoice by ID",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/invoices/{{invoiceId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["invoices", "{{invoiceId}}"]
+                }
+              }
+            },
+            {
+              "name": "Send Invoice",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"method\": \"EMAIL\",\n  \"recipient\": \"patient@email.com\",\n  \"message\": \"Please find your invoice attached.\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/invoices/{{invoiceId}}/send",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["invoices", "{{invoiceId}}", "send"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "💳 Payments",
+          "item": [
+            {
+              "name": "Record Payment",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"invoiceId\": \"{{invoiceId}}\",\n  \"amount\": 165.00,\n  \"method\": \"CARD\",\n  \"reference\": \"CC-TXN-123456\",\n  \"paidAt\": \"2024-01-15T14:30:00Z\",\n  \"notes\": \"Payment processed successfully\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/payments",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["payments"]
+                }
+              }
+            },
+            {
+              "name": "Get Payments",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/payments?invoiceId={{invoiceId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["payments"],
+                  "query": [
+                    {
+                      "key": "invoiceId",
+                      "value": "{{invoiceId}}"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "📊 Analytics & Reports",
+      "item": [
+        {
+          "name": "Generate Report",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reportType\": \"DAILY_REVENUE\",\n  \"name\": \"Daily Revenue Report\",\n  \"params\": {\n    \"startDate\": \"2024-01-01\",\n    \"endDate\": \"2024-01-31\"\n  },\n  \"format\": \"PDF\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reports/generate",
+              "host": ["{{baseUrl}}"],
+              "path": ["reports", "generate"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('reportId', response.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Available Reports",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reports",
+              "host": ["{{baseUrl}}"],
+              "path": ["reports"]
+            }
+          }
+        },
+        {
+          "name": "Get Report by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reports/{{reportId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["reports", "{{reportId}}"]
+            }
+          }
+        },
+        {
+          "name": "Download Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reports/{{reportId}}/download",
+              "host": ["{{baseUrl}}"],
+              "path": ["reports", "{{reportId}}", "download"]
+            }
+          }
+        },
+        {
+          "name": "Refresh Materialized Views",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reports/refresh-views",
+              "host": ["{{baseUrl}}"],
+              "path": ["reports", "refresh-views"]
+            }
+          }
+        },
+        {
+          "name": "Get Dashboard Analytics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reports/dashboard?period=MONTHLY",
+              "host": ["{{baseUrl}}"],
+              "path": ["reports", "dashboard"],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "MONTHLY"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
