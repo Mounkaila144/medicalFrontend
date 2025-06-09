@@ -113,7 +113,7 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Link href="/patients/new">
+          <Link href="/patients">
             <Button>
               <Plus className="h-4 w-4 mr-2" />
               Nouveau patient
@@ -309,7 +309,7 @@ export default function DashboardPage() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Link href="/patients/new">
+            <Link href="/patients">
               <Button variant="outline" className="w-full h-20 flex-col gap-2">
                 <Users className="h-6 w-6" />
                 Nouveau Patient

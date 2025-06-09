@@ -5,6 +5,28 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon, Plus, Search, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { AppointmentService } from "@/services/appointment.service";
+import { AppointmentForm } from "@/types";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -26,6 +48,16 @@ import { cn } from "@/lib/utils";
 import { appointmentService } from "@/services/appointment-service";
 import { Appointment, AppointmentStatus } from "@/types/appointment";
 
+const schema = z.object({
+  patientId: z.string().min(1, "Patient requis"),
+  practitionerId: z.string().min(1, "Praticien requis"),
+  startAt: z.string().min(1, "Date de début requise"),
+  endAt: z.string().min(1, "Date de fin requise"),
+  reason: z.string().min(1, "Motif requis"),
+});
+
+type FormData = z.infer<typeof schema>;
+
 export default function AppointmentsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -35,6 +67,10 @@ export default function AppointmentsPage() {
   const [date, setDate] = useState<Date>(new Date());
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<AppointmentStatus | "all">("all");
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+
+  const form = useForm<FormData>({ resolver: zodResolver(schema) });
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -56,18 +92,115 @@ export default function AppointmentsPage() {
     fetchAppointments();
   }, [date, statusFilter, searchQuery]);
 
-  const handleCreateAppointment = () => {
-    router.push("/appointments/new");
+  const onSubmit = async (values: FormData) => {
+    try {
+      setIsCreating(true);
+      const payload: AppointmentForm = {
+        patientId: values.patientId,
+        practitionerId: values.practitionerId,
+        startAt: values.startAt,
+        endAt: values.endAt,
+        reason: values.reason,
+      };
+      const appointment = await AppointmentService.createAppointment(payload);
+      setIsCreateModalOpen(false);
+      router.push(`/appointments/${appointment.id}`);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight">Appointments</h2>
-        <Button onClick={handleCreateAppointment}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Appointment
-        </Button>
+        <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              New Appointment
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>New Appointment</DialogTitle>
+              <DialogDescription>
+                Enter appointment details below.
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="patientId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input placeholder="Patient ID" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="practitionerId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input placeholder="Practitioner ID" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="startAt"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input type="datetime-local" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="endAt"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input type="datetime-local" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="reason"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input placeholder="Reason" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <DialogFooter>
+                  <Button type="submit" disabled={isCreating}>
+                    Create
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="flex flex-col sm:flex-row items-center gap-4">
