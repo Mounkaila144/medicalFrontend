@@ -52,7 +52,6 @@ const navigation: NavItem[] = [
     icon: Users,
     children: [
       { title: 'Liste des patients', href: '/patients', icon: Users },
-      { title: 'Nouveau patient', href: '/patients/new', icon: Users },
     ],
   },
   {
