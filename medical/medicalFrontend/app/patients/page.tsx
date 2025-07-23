@@ -77,31 +77,39 @@ import {
   Loader2,
   AlertCircle,
   RefreshCw,
+  Calendar,
+  FileText,
+  Clock,
+  DollarSign,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Patient, Gender, BloodType, PatientForm } from '@/types';
 import { PatientService } from '@/services/patient.service';
 import { useAuth } from '@/hooks/useAuth';
+import { downloadBlob } from '@/lib/download-utils';
 import { AuthService } from '@/services/auth-service';
 import { ClinicService } from '@/services/clinic-service';
 
-// Form validation schema
+// Form validation schema - based on backend requirements
 const patientFormSchema = z.object({
-  mrn: z.string().min(1, 'Le MRN est requis'),
+  // Required fields (based on backend @IsNotEmpty())
   firstName: z.string().min(1, 'Le prénom est requis'),
   lastName: z.string().min(1, 'Le nom est requis'),
-  dob: z.string().min(1, 'La date de naissance est requise'),
   gender: z.nativeEnum(Gender, { errorMap: () => ({ message: 'Le genre est requis' }) }),
+  age: z.number().min(0, 'L\'âge doit être positif').max(150, 'L\'âge doit être réaliste'),
+  
+  // Optional fields (based on backend @IsOptional())
+  mrn: z.string().optional(),
   bloodType: z.nativeEnum(BloodType).optional(),
-  phone: z.string().min(1, 'Le téléphone est requis'),
+  phone: z.string().optional(),
   email: z.string().email('Email invalide').optional().or(z.literal('')),
   address: z.object({
-    street: z.string().min(1, 'L\'adresse est requise'),
-    city: z.string().min(1, 'La ville est requise'),
-    state: z.string().min(1, 'L\'état/région est requis'),
-    zipCode: z.string().min(1, 'Le code postal est requis'),
-    country: z.string().min(1, 'Le pays est requis'),
-  }),
+    street: z.string().optional(),
+    city: z.string().optional(),
+    state: z.string().optional(),
+    zipCode: z.string().optional(),
+    country: z.string().optional(),
+  }).optional(),
 });
 
 type PatientFormData = z.infer<typeof patientFormSchema>;
@@ -112,6 +120,9 @@ export default function PatientsPage() {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [genderFilter, setGenderFilter] = useState<string>('all');
+  const [ageFilter, setAgeFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<string>('lastName');
+  const [sortOrder, setSortOrder] = useState<string>('asc');
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -122,15 +133,75 @@ export default function PatientsPage() {
   const [selectedClinicId, setSelectedClinicId] = useState<string | null>(null);
   const [availableClinics, setAvailableClinics] = useState<any[]>([]);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  
+  // Modal states
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [showPatientDetailModal, setShowPatientDetailModal] = useState(false);
+  const [showEditPatientModal, setShowEditPatientModal] = useState(false);
+  const [showAppointmentModal, setShowAppointmentModal] = useState(false);
+  const [showConsultationModal, setShowConsultationModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [isUpdatingPatient, setIsUpdatingPatient] = useState(false);
 
   const form = useForm<PatientFormData>({
     resolver: zodResolver(patientFormSchema),
     defaultValues: {
-      mrn: '',
+      // Required fields
       firstName: '',
       lastName: '',
-      dob: '',
       gender: Gender.M,
+      age: 0,
+      
+      // Optional fields
+      mrn: '',
+      bloodType: undefined,
+      phone: '',
+      email: '',
+      address: {
+        street: '',
+        city: '',
+        state: '',
+        zipCode: '',
+        country: 'France',
+      },
+    },
+  });
+
+  // Schema for editing (without mrn which is not editable)
+  const patientEditSchema = z.object({
+    // Required fields
+    firstName: z.string().min(1, 'Le prénom est requis'),
+    lastName: z.string().min(1, 'Le nom est requis'),
+    gender: z.nativeEnum(Gender, { errorMap: () => ({ message: 'Le genre est requis' }) }),
+    age: z.number().min(0, 'L\'âge doit être positif').max(150, 'L\'âge doit être réaliste'),
+    
+    // Optional fields (no mrn)
+    bloodType: z.nativeEnum(BloodType).optional(),
+    phone: z.string().optional(),
+    email: z.string().email('Email invalide').optional().or(z.literal('')),
+    address: z.object({
+      street: z.string().optional(),
+      city: z.string().optional(),
+      state: z.string().optional(),
+      zipCode: z.string().optional(),
+      country: z.string().optional(),
+    }).optional(),
+  });
+
+  type PatientEditData = z.infer<typeof patientEditSchema>;
+
+  // Separate form for editing in modal
+  const editForm = useForm<PatientEditData>({
+    resolver: zodResolver(patientEditSchema),
+    defaultValues: {
+      // Required fields
+      firstName: '',
+      lastName: '',
+      gender: Gender.M,
+      age: 0,
+      
+      // Optional fields (no mrn)
       bloodType: undefined,
       phone: '',
       email: '',
@@ -191,11 +262,14 @@ export default function PatientsPage() {
       const userRole = user.role;
       setIsSuperAdmin(userRole === 'SUPERADMIN');
 
-      // Build params with clinic ID
+      // Build params with clinic ID and filters
       const params: any = {
         search: searchTerm || undefined,
         page,
         limit: 10,
+        sortBy,
+        sortOrder,
+        gender: genderFilter !== 'all' ? genderFilter : undefined,
       };
       
       if (userRole === 'SUPERADMIN') {
@@ -285,19 +359,14 @@ export default function PatientsPage() {
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [searchTerm, selectedClinicId]);
+  }, [searchTerm, selectedClinicId, genderFilter, sortBy, sortOrder]);
 
   // Update user profile on mount to ensure tenantId is available
   useEffect(() => {
     updateUserProfile();
   }, []);
 
-  // Filter patients based on gender filter
-  const filteredPatients = (patients || []).filter((patient) => {
-    const matchesGender = genderFilter === 'all' || patient.gender === genderFilter;
-    return matchesGender;
-  });
-
+  // Helper function to calculate age from dob
   const calculateAge = (dob: string): number => {
     const birthDate = new Date(dob);
     const today = new Date();
@@ -310,6 +379,36 @@ export default function PatientsPage() {
     
     return age;
   };
+
+  // Filter patients based on filters (note: most filtering should be done server-side)
+  const filteredPatients = (patients || []).filter((patient) => {
+    const matchesGender = genderFilter === 'all' || patient.gender === genderFilter;
+    
+    // Age filter (client-side for display)
+    const age = calculateAge(patient.dob);
+    let matchesAge = true;
+    if (ageFilter !== 'all') {
+      switch (ageFilter) {
+        case '0-18':
+          matchesAge = age <= 18;
+          break;
+        case '19-30':
+          matchesAge = age >= 19 && age <= 30;
+          break;
+        case '31-50':
+          matchesAge = age >= 31 && age <= 50;
+          break;
+        case '51-70':
+          matchesAge = age >= 51 && age <= 70;
+          break;
+        case '70+':
+          matchesAge = age > 70;
+          break;
+      }
+    }
+    
+    return matchesGender && matchesAge;
+  });
 
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString('fr-FR');
@@ -325,6 +424,80 @@ export default function PatientsPage() {
         return 'Autre';
       default:
         return 'Non spécifié';
+    }
+  };
+
+  // Open edit modal and populate form
+  const handleOpenEditModal = (patient: Patient) => {
+    setSelectedPatient(patient);
+    
+    // Calculate age from dob if available
+    let calculatedAge = 0;
+    if (patient.dob) {
+      calculatedAge = calculateAge(patient.dob);
+    }
+    
+    // Populate edit form with patient data (no mrn)
+    editForm.reset({
+      firstName: patient.firstName || '',
+      lastName: patient.lastName || '',
+      gender: patient.gender || Gender.M,
+      age: calculatedAge,
+      bloodType: patient.bloodType || undefined,
+      phone: patient.phone || '',
+      email: patient.email || '',
+      address: patient.address || {
+        street: '',
+        city: '',
+        state: '',
+        zipCode: '',
+        country: 'France',
+      },
+    });
+    
+    setShowEditPatientModal(true);
+  };
+
+  const handleUpdatePatient = async (data: PatientEditData) => {
+    if (!selectedPatient) return;
+    
+    try {
+      setIsUpdatingPatient(true);
+      
+      // Convert age back to dob for backend
+      let dob: Date | undefined = undefined;
+      if (data.age && data.age > 0) {
+        const today = new Date();
+        dob = new Date(today.getFullYear() - data.age, today.getMonth(), today.getDate());
+      }
+      
+      // Prepare data according to UpdatePatientDto (no age, no mrn)
+      const patientData = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        gender: data.gender,
+        dob: dob, // Send dob instead of age
+        bloodType: data.bloodType || undefined,
+        phone: data.phone || undefined,
+        email: data.email || undefined,
+        address: data.address,
+        clinicId: selectedPatient.clinicId, // Keep existing clinic ID
+      };
+      
+      // Remove undefined values
+      const cleanData = Object.fromEntries(
+        Object.entries(patientData).filter(([_, v]) => v !== undefined)
+      );
+      
+      await PatientService.updatePatient(selectedPatient.id, cleanData);
+      await loadPatients(currentPage); // Reload current page
+      setShowEditPatientModal(false);
+      toast.success('Patient mis à jour avec succès');
+    } catch (error: any) {
+      console.error('Error updating patient:', error);
+      toast.error('Erreur lors de la mise à jour du patient');
+    } finally {
+      setIsUpdatingPatient(false);
     }
   };
 
@@ -447,14 +620,8 @@ export default function PatientsPage() {
   const handleExportPatients = async () => {
     try {
       const blob = await PatientService.exportPatients('csv');
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
-      a.download = `patients_${new Date().toISOString().split('T')[0]}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
+      const filename = `patients_${new Date().toISOString().split('T')[0]}.csv`;
+      downloadBlob(blob, filename);
       toast.success('Export terminé avec succès');
     } catch (error) {
       console.error('Error exporting patients:', error);
@@ -495,104 +662,6 @@ export default function PatientsPage() {
           <p className="text-gray-600 mt-1">
             Gérez vos patients et leurs informations médicales
           </p>
-          {process.env.NODE_ENV === 'development' && (
-            <div className="mt-2 p-2 bg-gray-100 rounded text-xs space-y-2">
-                             <div>
-                 <strong>Debug Auth:</strong> {isAuthenticated ? '✅ Authentifié' : '❌ Non authentifié'} | 
-                 Token: {typeof window !== 'undefined' && localStorage.getItem('accessToken') ? '✅ Présent' : '❌ Absent'} |
-                 User: {typeof window !== 'undefined' && localStorage.getItem('user') ? '✅ Présent' : '❌ Absent'} |
-                 SuperAdmin: {isSuperAdmin ? '✅ Oui' : '❌ Non'} |
-                 Clinique: {selectedClinicId || '❌ Aucune'}
-               </div>
-              {typeof window !== 'undefined' && localStorage.getItem('accessToken') && (
-                <div className="text-green-600">
-                  <strong>Token preview:</strong> {localStorage.getItem('accessToken')?.substring(0, 30)}...
-                </div>
-              )}
-              {typeof window !== 'undefined' && localStorage.getItem('user') && (
-                <div className="text-blue-600">
-                  <strong>User data:</strong> {JSON.stringify(JSON.parse(localStorage.getItem('user') || '{}'), null, 2)}
-                </div>
-              )}
-              
-              {/* Button to fetch fresh user profile */}
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={async () => {
-                  try {
-                    const profileData = await AuthService.getProfile();
-                    console.log('🔍 Fresh user profile from API:', profileData);
-                  } catch (error) {
-                    console.error('Error fetching profile:', error);
-                  }
-                }}
-              >
-                Fetch Fresh Profile
-              </Button>
-              <div className="flex gap-2">
-                {!isAuthenticated && (
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => router.push('/auth/login')}
-                  >
-                    Aller à la connexion
-                  </Button>
-                )}
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => {
-                    if (typeof window !== 'undefined') {
-                      console.log('🔍 Debug Token Info:', {
-                        token: localStorage.getItem('accessToken'),
-                        user: localStorage.getItem('user'),
-                        refreshToken: localStorage.getItem('refreshToken'),
-                        isAuthenticated,
-                        checkAuthResult: checkAuth()
-                      });
-                    }
-                  }}
-                >
-                  Log Token Info
-                </Button>
-                                 <Button 
-                   variant="outline" 
-                   size="sm"
-                   onClick={async () => {
-                     console.log('🔍 Testing services...');
-                     
-                     // Test Auth Service
-                     try {
-                       const profile = await AuthService.getProfile();
-                       console.log('✅ Auth Service - Profile:', profile);
-                     } catch (error) {
-                       console.error('❌ Auth Service - Profile Error:', error);
-                     }
-                     
-                     // Test Clinic Service
-                     try {
-                       const clinics = await ClinicService.getClinics();
-                       console.log('✅ Clinic Service - Clinics:', clinics);
-                     } catch (error) {
-                       console.error('❌ Clinic Service - Clinics Error:', error);
-                     }
-                     
-                     // Test Patient Service
-                     try {
-                       const patients = await PatientService.getPatients({ limit: 5 });
-                       console.log('✅ Patient Service - Patients:', patients);
-                     } catch (error) {
-                       console.error('❌ Patient Service - Patients Error:', error);
-                     }
-                   }}
-                 >
-                   Test Services
-                 </Button>
-              </div>
-            </div>
-          )}
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleExportPatients} disabled={!isAuthenticated}>
@@ -618,88 +687,142 @@ export default function PatientsPage() {
                 </DialogDescription>
               </DialogHeader>
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleCreatePatient)} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="mrn"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>MRN *</FormLabel>
-                          <FormControl>
-                            <Input placeholder="MRN-001" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="gender"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Genre *</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <form onSubmit={form.handleSubmit(handleCreatePatient)} className="space-y-6">
+                  {/* Section des champs obligatoires */}
+                  <div className="space-y-4">
+                    <div className="border-b pb-3">
+                      <h3 className="text-lg font-medium text-gray-900">Informations obligatoires</h3>
+                      <p className="text-sm text-gray-500">Les champs marqués d'un * sont requis</p>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="firstName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Prénom *</FormLabel>
                             <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Sélectionner le genre" />
-                              </SelectTrigger>
+                              <Input placeholder="Jean" {...field} />
                             </FormControl>
-                            <SelectContent>
-                              <SelectItem value={Gender.M}>Homme</SelectItem>
-                              <SelectItem value={Gender.F}>Femme</SelectItem>
-                              <SelectItem value={Gender.OTHER}>Autre</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="lastName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nom *</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Dupont" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="gender"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Genre *</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Sélectionner le genre" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value={Gender.M}>Homme</SelectItem>
+                                <SelectItem value={Gender.F}>Femme</SelectItem>
+                                <SelectItem value={Gender.OTHER}>Autre</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="age"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Âge *</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                placeholder="25" 
+                                {...field} 
+                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="firstName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Prénom *</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Jean" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="lastName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Nom *</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Dupont" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  {/* Section des champs optionnels */}
+                  <div className="space-y-4">
+                    <div className="border-b pb-3">
+                      <h3 className="text-lg font-medium text-gray-900">Informations complémentaires</h3>
+                      <p className="text-sm text-gray-500">Ces champs sont optionnels</p>
+                    </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="dob"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Date de naissance *</FormLabel>
-                          <FormControl>
-                            <Input type="date" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="mrn"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>MRN</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Généré automatiquement si vide" {...field} />
+                            </FormControl>
+                            <FormDescription>
+                              Numéro d'identification médical (généré automatiquement si non fourni)
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Téléphone</FormLabel>
+                            <FormControl>
+                              <Input placeholder="+33123456789" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                              <Input type="email" placeholder="jean.dupont@email.com" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
                     <FormField
                       control={form.control}
                       name="bloodType"
@@ -709,7 +832,7 @@ export default function PatientsPage() {
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Sélectionner" />
+                                <SelectValue placeholder="Sélectionner le groupe sanguin" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
@@ -729,43 +852,19 @@ export default function PatientsPage() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="phone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Téléphone *</FormLabel>
-                          <FormControl>
-                            <Input placeholder="+33123456789" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email</FormLabel>
-                          <FormControl>
-                            <Input type="email" placeholder="jean.dupont@email.com" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
+                  {/* Section adresse */}
                   <div className="space-y-4">
-                    <h4 className="font-medium">Adresse</h4>
+                    <div className="border-b pb-3">
+                      <h3 className="text-lg font-medium text-gray-900">Adresse</h3>
+                      <p className="text-sm text-gray-500">Informations de contact</p>
+                    </div>
+                    
                     <FormField
                       control={form.control}
                       name="address.street"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Rue *</FormLabel>
+                          <FormLabel>Rue</FormLabel>
                           <FormControl>
                             <Input placeholder="123 Rue de la Paix" {...field} />
                           </FormControl>
@@ -779,7 +878,7 @@ export default function PatientsPage() {
                         name="address.city"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Ville *</FormLabel>
+                            <FormLabel>Ville</FormLabel>
                             <FormControl>
                               <Input placeholder="Paris" {...field} />
                             </FormControl>
@@ -792,7 +891,7 @@ export default function PatientsPage() {
                         name="address.zipCode"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Code postal *</FormLabel>
+                            <FormLabel>Code postal</FormLabel>
                             <FormControl>
                               <Input placeholder="75001" {...field} />
                             </FormControl>
@@ -807,7 +906,7 @@ export default function PatientsPage() {
                         name="address.state"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>État/Région *</FormLabel>
+                            <FormLabel>État/Région</FormLabel>
                             <FormControl>
                               <Input placeholder="Île-de-France" {...field} />
                             </FormControl>
@@ -820,7 +919,7 @@ export default function PatientsPage() {
                         name="address.country"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Pays *</FormLabel>
+                            <FormLabel>Pays</FormLabel>
                             <FormControl>
                               <Input placeholder="France" {...field} />
                             </FormControl>
@@ -905,44 +1004,102 @@ export default function PatientsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            {/* Clinic selector for SUPERADMIN */}
-            {isSuperAdmin && (
-              <Select value={selectedClinicId || ''} onValueChange={setSelectedClinicId}>
-                <SelectTrigger className="w-full sm:w-[200px]">
-                  <SelectValue placeholder="Sélectionner une clinique" />
+          <div className="space-y-4">
+            {/* Première ligne - Recherche et sélection clinique */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              {/* Clinic selector for SUPERADMIN */}
+              {isSuperAdmin && (
+                <Select value={selectedClinicId || ''} onValueChange={setSelectedClinicId}>
+                  <SelectTrigger className="w-full sm:w-[200px]">
+                    <SelectValue placeholder="Sélectionner une clinique" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableClinics.map((clinic) => (
+                      <SelectItem key={clinic.id} value={clinic.id}>
+                        {clinic.name || clinic.clinicName || `Clinique ${clinic.id}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <Input
+                  placeholder="Rechercher par nom, MRN ou email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setSearchTerm('');
+                  setGenderFilter('all');
+                  setAgeFilter('all');
+                  setSortBy('lastName');
+                  setSortOrder('asc');
+                }}
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Réinitialiser
+              </Button>
+            </div>
+
+            {/* Deuxième ligne - Filtres et tri */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Select value={genderFilter} onValueChange={setGenderFilter}>
+                <SelectTrigger className="w-full sm:w-[150px]">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Genre" />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableClinics.map((clinic) => (
-                    <SelectItem key={clinic.id} value={clinic.id}>
-                      {clinic.name || clinic.clinicName || `Clinique ${clinic.id}`}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="all">Tous les genres</SelectItem>
+                  <SelectItem value={Gender.M}>Homme</SelectItem>
+                  <SelectItem value={Gender.F}>Femme</SelectItem>
+                  <SelectItem value={Gender.OTHER}>Autre</SelectItem>
                 </SelectContent>
               </Select>
-            )}
-            
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <Input
-                placeholder="Rechercher par nom, MRN ou email..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+
+              <Select value={ageFilter} onValueChange={setAgeFilter}>
+                <SelectTrigger className="w-full sm:w-[150px]">
+                  <SelectValue placeholder="Âge" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les âges</SelectItem>
+                  <SelectItem value="0-18">0-18 ans</SelectItem>
+                  <SelectItem value="19-30">19-30 ans</SelectItem>
+                  <SelectItem value="31-50">31-50 ans</SelectItem>
+                  <SelectItem value="51-70">51-70 ans</SelectItem>
+                  <SelectItem value="70+">70+ ans</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-full sm:w-[150px]">
+                  <SelectValue placeholder="Trier par" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="lastName">Nom</SelectItem>
+                  <SelectItem value="firstName">Prénom</SelectItem>
+                  <SelectItem value="createdAt">Date création</SelectItem>
+                  <SelectItem value="updatedAt">Dernière visite</SelectItem>
+                  <SelectItem value="dob">Âge</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={sortOrder} onValueChange={setSortOrder}>
+                <SelectTrigger className="w-full sm:w-[120px]">
+                  <SelectValue placeholder="Ordre" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="asc">Croissant</SelectItem>
+                  <SelectItem value="desc">Décroissant</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <Select value={genderFilter} onValueChange={setGenderFilter}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Genre" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous les genres</SelectItem>
-                <SelectItem value={Gender.M}>Homme</SelectItem>
-                <SelectItem value={Gender.F}>Femme</SelectItem>
-                <SelectItem value={Gender.OTHER}>Autre</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           {/* Error message */}
@@ -1028,38 +1185,104 @@ export default function PatientsPage() {
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuContent align="end" className="w-56">
+                            <DropdownMenuLabel>Actions du patient</DropdownMenuLabel>
                             <DropdownMenuSeparator />
+                            
+                            {/* Actions de consultation */}
                             <DropdownMenuItem
-                              onClick={() => router.push(`/patients/${patient.id}`)}
+                              onClick={() => {
+                                setSelectedPatient(patient);
+                                setShowPatientDetailModal(true);
+                              }}
                             >
                               <Eye className="mr-2 h-4 w-4" />
-                              Voir le profil
+                              Voir le profil complet
                             </DropdownMenuItem>
+                            
                             <DropdownMenuItem
-                              onClick={() => router.push(`/patients/${patient.id}/edit`)}
+                              onClick={() => handleOpenEditModal(patient)}
                             >
                               <Edit className="mr-2 h-4 w-4" />
-                              Modifier
+                              Modifier les informations
                             </DropdownMenuItem>
+                            
                             <DropdownMenuSeparator />
+                            
+                            {/* Actions médicales */}
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelectedPatient(patient);
+                                setShowAppointmentModal(true);
+                              }}
+                            >
+                              <Calendar className="mr-2 h-4 w-4" />
+                              Planifier un RDV
+                            </DropdownMenuItem>
+                            
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelectedPatient(patient);
+                                setShowConsultationModal(true);
+                              }}
+                            >
+                              <FileText className="mr-2 h-4 w-4" />
+                              Nouvelle consultation
+                            </DropdownMenuItem>
+                            
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelectedPatient(patient);
+                                setShowHistoryModal(true);
+                              }}
+                            >
+                              <Clock className="mr-2 h-4 w-4" />
+                              Historique médical
+                            </DropdownMenuItem>
+                            
+                            <DropdownMenuSeparator />
+                            
+                            {/* Actions de gestion */}
+                            <DropdownMenuItem
+                              onClick={() => {
+                                navigator.clipboard.writeText(`${patient.firstName} ${patient.lastName} - ${patient.mrn}`);
+                                toast.success('Informations copiées');
+                              }}
+                            >
+                              <Download className="mr-2 h-4 w-4" />
+                              Copier les informations
+                            </DropdownMenuItem>
+                            
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelectedPatient(patient);
+                                setShowInvoiceModal(true);
+                              }}
+                            >
+                              <DollarSign className="mr-2 h-4 w-4" />
+                              Créer une facture
+                            </DropdownMenuItem>
+                            
+                            <DropdownMenuSeparator />
+                            
+                            {/* Action de suppression */}
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
-                            <DropdownMenuItem
+                                <DropdownMenuItem
                                   onSelect={(e) => e.preventDefault()}
-                              className="text-red-600"
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Supprimer
-                            </DropdownMenuItem>
+                                  className="text-red-600 focus:text-red-600"
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Supprimer le patient
+                                </DropdownMenuItem>
                               </AlertDialogTrigger>
                               <AlertDialogContent>
                                 <AlertDialogHeader>
-                                  <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
+                                  <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
                                   <AlertDialogDescription>
                                     Cette action ne peut pas être annulée. Cela supprimera définitivement
-                                    le patient <strong>{patient.firstName} {patient.lastName}</strong> et toutes ses données associées.
+                                    le patient <strong>{patient.firstName} {patient.lastName}</strong> (MRN: {patient.mrn}) 
+                                    et toutes ses données associées (historique médical, rendez-vous, factures).
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
@@ -1068,7 +1291,7 @@ export default function PatientsPage() {
                                     onClick={() => handleDeletePatient(patient.id)}
                                     className="bg-red-600 hover:bg-red-700"
                                   >
-                                    Supprimer
+                                    Supprimer définitivement
                                   </AlertDialogAction>
                                 </AlertDialogFooter>
                               </AlertDialogContent>
@@ -1114,6 +1337,547 @@ export default function PatientsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Patient Detail Modal */}
+      <Dialog open={showPatientDetailModal} onOpenChange={setShowPatientDetailModal}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Profil du patient</DialogTitle>
+            <DialogDescription>
+              Informations détaillées du patient
+            </DialogDescription>
+          </DialogHeader>
+          {selectedPatient && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium">Nom complet</Label>
+                  <p className="text-sm text-gray-600">{selectedPatient.firstName} {selectedPatient.lastName}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">MRN</Label>
+                  <p className="text-sm text-gray-600">{selectedPatient.mrn}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Genre</Label>
+                  <p className="text-sm text-gray-600">
+                    {selectedPatient.gender === 'M' ? 'Homme' : selectedPatient.gender === 'F' ? 'Femme' : 'Autre'}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Téléphone</Label>
+                  <p className="text-sm text-gray-600">{selectedPatient.phone || 'Non renseigné'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Email</Label>
+                  <p className="text-sm text-gray-600">{selectedPatient.email || 'Non renseigné'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Groupe sanguin</Label>
+                  <p className="text-sm text-gray-600">{selectedPatient.bloodType || 'Non renseigné'}</p>
+                </div>
+              </div>
+              {selectedPatient.address && (
+                <div>
+                  <Label className="text-sm font-medium">Adresse</Label>
+                  <p className="text-sm text-gray-600">
+                    {[
+                      selectedPatient.address.street,
+                      selectedPatient.address.city,
+                      selectedPatient.address.zipCode,
+                      selectedPatient.address.country
+                    ].filter(Boolean).join(', ') || 'Non renseignée'}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPatientDetailModal(false)}>
+              Fermer
+            </Button>
+            <Button onClick={() => {
+              setShowPatientDetailModal(false);
+              setShowEditPatientModal(true);
+            }}>
+              Modifier
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Patient Modal */}
+      <Dialog open={showEditPatientModal} onOpenChange={setShowEditPatientModal}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Modifier le patient</DialogTitle>
+            <DialogDescription>
+              Modifier les informations du patient {selectedPatient?.firstName} {selectedPatient?.lastName}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedPatient && (
+            <Form {...editForm}>
+              <form 
+                onSubmit={editForm.handleSubmit(handleUpdatePatient)} 
+                className="space-y-6"
+                id="edit-patient-modal-form"
+              >
+                {/* Section des champs obligatoires */}
+                <div className="space-y-4">
+                  <div className="border-b pb-3">
+                    <h3 className="text-lg font-medium text-gray-900">Informations obligatoires</h3>
+                    <p className="text-sm text-gray-500">Les champs marqués d'un * sont requis</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={editForm.control}
+                      name="firstName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Prénom *</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Jean" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={editForm.control}
+                      name="lastName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nom *</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Dupont" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={editForm.control}
+                      name="gender"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Genre *</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Sélectionner le genre" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value={Gender.M}>Homme</SelectItem>
+                              <SelectItem value={Gender.F}>Femme</SelectItem>
+                              <SelectItem value={Gender.OTHER}>Autre</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={editForm.control}
+                      name="age"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Âge *</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              placeholder="25" 
+                              {...field} 
+                              onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                {/* Section des champs optionnels */}
+                <div className="space-y-4">
+                  <div className="border-b pb-3">
+                    <h3 className="text-lg font-medium text-gray-900">Informations complémentaires</h3>
+                    <p className="text-sm text-gray-500">Ces champs sont optionnels</p>
+                  </div>
+
+                  {/* Display MRN as read-only */}
+                  <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                    <Label className="text-sm font-medium text-gray-700">MRN (non modifiable)</Label>
+                    <p className="text-lg font-semibold text-gray-900">{selectedPatient?.mrn}</p>
+                    <p className="text-xs text-gray-500">Le numéro d'identification médical ne peut pas être modifié</p>
+                  </div>
+
+                  <FormField
+                    control={editForm.control}
+                    name="bloodType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Groupe sanguin</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Sélectionner le groupe sanguin" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value={BloodType.A_POSITIVE}>A+</SelectItem>
+                            <SelectItem value={BloodType.A_NEGATIVE}>A-</SelectItem>
+                            <SelectItem value={BloodType.B_POSITIVE}>B+</SelectItem>
+                            <SelectItem value={BloodType.B_NEGATIVE}>B-</SelectItem>
+                            <SelectItem value={BloodType.AB_POSITIVE}>AB+</SelectItem>
+                            <SelectItem value={BloodType.AB_NEGATIVE}>AB-</SelectItem>
+                            <SelectItem value={BloodType.O_POSITIVE}>O+</SelectItem>
+                            <SelectItem value={BloodType.O_NEGATIVE}>O-</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={editForm.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Téléphone</FormLabel>
+                          <FormControl>
+                            <Input placeholder="+33123456789" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={editForm.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input type="email" placeholder="jean.dupont@email.com" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                {/* Section adresse */}
+                <div className="space-y-4">
+                  <div className="border-b pb-3">
+                    <h3 className="text-lg font-medium text-gray-900">Adresse</h3>
+                    <p className="text-sm text-gray-500">Informations de contact</p>
+                  </div>
+                  
+                  <FormField
+                    control={editForm.control}
+                    name="address.street"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Rue</FormLabel>
+                        <FormControl>
+                          <Input placeholder="123 Rue de la Paix" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={editForm.control}
+                      name="address.city"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Ville</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Paris" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={editForm.control}
+                      name="address.zipCode"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Code postal</FormLabel>
+                          <FormControl>
+                            <Input placeholder="75001" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={editForm.control}
+                      name="address.state"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>État/Région</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Île-de-France" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={editForm.control}
+                      name="address.country"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Pays</FormLabel>
+                          <FormControl>
+                            <Input placeholder="France" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+              </form>
+            </Form>
+          )}
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowEditPatientModal(false)}
+              disabled={isUpdatingPatient}
+            >
+              Annuler
+            </Button>
+            <Button 
+              form="edit-patient-modal-form"
+              type="submit"
+              disabled={isUpdatingPatient}
+            >
+              {isUpdatingPatient && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Enregistrer les modifications
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Schedule Appointment Modal */}
+      <Dialog open={showAppointmentModal} onOpenChange={setShowAppointmentModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Planifier un rendez-vous</DialogTitle>
+            <DialogDescription>
+              Planifier un rendez-vous pour {selectedPatient?.firstName} {selectedPatient?.lastName}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="appointment-date">Date du rendez-vous</Label>
+              <Input id="appointment-date" type="datetime-local" />
+            </div>
+            <div>
+              <Label htmlFor="appointment-type">Type de rendez-vous</Label>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner le type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="consultation">Consultation générale</SelectItem>
+                  <SelectItem value="followup">Suivi</SelectItem>
+                  <SelectItem value="emergency">Urgence</SelectItem>
+                  <SelectItem value="checkup">Contrôle</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="appointment-notes">Notes (optionnel)</Label>
+              <Input id="appointment-notes" placeholder="Notes sur le rendez-vous" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAppointmentModal(false)}>
+              Annuler
+            </Button>
+            <Button onClick={() => {
+              toast.success('Rendez-vous planifié avec succès');
+              setShowAppointmentModal(false);
+            }}>
+              Planifier
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* New Consultation Modal */}
+      <Dialog open={showConsultationModal} onOpenChange={setShowConsultationModal}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Nouvelle consultation</DialogTitle>
+            <DialogDescription>
+              Créer une nouvelle consultation pour {selectedPatient?.firstName} {selectedPatient?.lastName}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="consultation-chief-complaint">Motif de consultation</Label>
+              <Input id="consultation-chief-complaint" placeholder="Raison de la visite" />
+            </div>
+            <div>
+              <Label htmlFor="consultation-symptoms">Symptômes</Label>
+              <textarea
+                id="consultation-symptoms"
+                className="w-full h-20 px-3 py-2 border border-gray-300 rounded-md"
+                placeholder="Décrire les symptômes..."
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="consultation-temperature">Température (°C)</Label>
+                <Input id="consultation-temperature" type="number" placeholder="37.0" />
+              </div>
+              <div>
+                <Label htmlFor="consultation-blood-pressure">Tension artérielle</Label>
+                <Input id="consultation-blood-pressure" placeholder="120/80" />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="consultation-diagnosis">Diagnostic</Label>
+              <textarea
+                id="consultation-diagnosis"
+                className="w-full h-20 px-3 py-2 border border-gray-300 rounded-md"
+                placeholder="Diagnostic médical..."
+              />
+            </div>
+            <div>
+              <Label htmlFor="consultation-treatment">Traitement prescrit</Label>
+              <textarea
+                id="consultation-treatment"
+                className="w-full h-20 px-3 py-2 border border-gray-300 rounded-md"
+                placeholder="Médicaments et instructions..."
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowConsultationModal(false)}>
+              Annuler
+            </Button>
+            <Button onClick={() => {
+              toast.success('Consultation enregistrée avec succès');
+              setShowConsultationModal(false);
+            }}>
+              Enregistrer la consultation
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Medical History Modal */}
+      <Dialog open={showHistoryModal} onOpenChange={setShowHistoryModal}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Historique médical</DialogTitle>
+            <DialogDescription>
+              Historique médical de {selectedPatient?.firstName} {selectedPatient?.lastName}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="text-center py-8">
+              <Clock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <p className="text-gray-500 mb-4">
+                Aucun historique médical disponible pour ce patient.
+              </p>
+              <Button onClick={() => {
+                setShowHistoryModal(false);
+                setShowConsultationModal(true);
+              }}>
+                Créer la première consultation
+              </Button>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowHistoryModal(false)}>
+              Fermer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Invoice Modal */}
+      <Dialog open={showInvoiceModal} onOpenChange={setShowInvoiceModal}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Créer une facture</DialogTitle>
+            <DialogDescription>
+              Créer une nouvelle facture pour {selectedPatient?.firstName} {selectedPatient?.lastName}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="invoice-service">Service</Label>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner le service" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="consultation">Consultation générale</SelectItem>
+                  <SelectItem value="checkup">Contrôle de routine</SelectItem>
+                  <SelectItem value="procedure">Procédure médicale</SelectItem>
+                  <SelectItem value="lab">Analyses de laboratoire</SelectItem>
+                  <SelectItem value="medication">Médicaments</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="invoice-quantity">Quantité</Label>
+                <Input id="invoice-quantity" type="number" defaultValue="1" />
+              </div>
+              <div>
+                <Label htmlFor="invoice-unit-price">Prix unitaire (€)</Label>
+                <Input id="invoice-unit-price" type="number" placeholder="50.00" />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="invoice-description">Description (optionnel)</Label>
+              <textarea
+                id="invoice-description"
+                className="w-full h-20 px-3 py-2 border border-gray-300 rounded-md"
+                placeholder="Description détaillée du service..."
+              />
+            </div>
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="flex justify-between items-center">
+                <span className="font-medium">Total estimé:</span>
+                <span className="text-lg font-bold">€ 50.00</span>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowInvoiceModal(false)}>
+              Annuler
+            </Button>
+            <Button onClick={() => {
+              toast.success('Facture créée avec succès');
+              setShowInvoiceModal(false);
+            }}>
+              Créer la facture
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 

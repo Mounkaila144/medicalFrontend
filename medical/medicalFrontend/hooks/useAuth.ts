@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation';
 import { AuthService } from '@/services/auth.service';
 import { User, Practitioner, LoginForm } from '@/types';
 import { handleApiError, tokenManager } from '@/lib/api';
+import { useTokenRefresh } from './useTokenRefresh';
 
 interface AuthState {
   user: User | null;
@@ -30,6 +31,9 @@ export const useAuth = (): UseAuthReturn => {
     isLoading: true,
     error: null,
   });
+
+  // Initialize token refresh system
+  useTokenRefresh();
 
   // Initialize auth state
   useEffect(() => {

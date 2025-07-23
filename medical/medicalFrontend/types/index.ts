@@ -463,4 +463,7 @@ export interface SearchFilters {
   plan?: SubscriptionPlan | 'all';
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
-} 
+}
+
+// Re-export schedule types for convenience
+export * from './schedule'; 

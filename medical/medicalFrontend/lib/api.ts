@@ -1,10 +1,12 @@
 import { AuthResponse } from '@/types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://medical.nigerdev.com';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 // Token management
 class TokenManager {
   private static instance: TokenManager;
+  private refreshPromise: Promise<boolean> | null = null;
+  private refreshTimer: NodeJS.Timeout | null = null;
   
   static getInstance(): TokenManager {
     if (!TokenManager.instance) {
@@ -27,6 +29,10 @@ class TokenManager {
     if (typeof window === 'undefined') return;
     localStorage.setItem('accessToken', accessToken);
     localStorage.setItem('refreshToken', refreshToken);
+    localStorage.setItem('tokenSetAt', Date.now().toString());
+    
+    // Schedule proactive refresh (refresh 5 minutes before expiration)
+    this.scheduleTokenRefresh(accessToken);
   }
 
   clearTokens(): void {
@@ -35,6 +41,69 @@ class TokenManager {
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
     localStorage.removeItem('practitioner');
+    localStorage.removeItem('tokenSetAt');
+    
+    // Clear refresh timer
+    if (this.refreshTimer) {
+      clearTimeout(this.refreshTimer);
+      this.refreshTimer = null;
+    }
+  }
+
+  // Decode JWT payload to get expiration
+  private decodeJWT(token: string): any {
+    try {
+      const payload = token.split('.')[1];
+      const decoded = atob(payload);
+      return JSON.parse(decoded);
+    } catch {
+      return null;
+    }
+  }
+
+  // Check if token is expired or will expire soon
+  isTokenExpired(token: string, bufferMinutes: number = 5): boolean {
+    const decoded = this.decodeJWT(token);
+    if (!decoded || !decoded.exp) return true;
+    
+    const expirationTime = decoded.exp * 1000; // Convert to milliseconds
+    const bufferTime = bufferMinutes * 60 * 1000; // Convert minutes to milliseconds
+    const now = Date.now();
+    
+    return now >= (expirationTime - bufferTime);
+  }
+
+  // Schedule automatic token refresh
+  private scheduleTokenRefresh(accessToken: string): void {
+    if (this.refreshTimer) {
+      clearTimeout(this.refreshTimer);
+    }
+
+    const decoded = this.decodeJWT(accessToken);
+    if (!decoded || !decoded.exp) return;
+
+    const expirationTime = decoded.exp * 1000;
+    const refreshTime = expirationTime - (5 * 60 * 1000) - Date.now(); // Refresh 5 minutes before expiration
+
+    if (refreshTime > 0) {
+      this.refreshTimer = setTimeout(() => {
+        this.proactiveRefresh();
+      }, refreshTime);
+      
+      console.log(`🔄 Token refresh scheduled in ${Math.round(refreshTime / 1000 / 60)} minutes`);
+    }
+  }
+
+  // Proactive token refresh
+  private async proactiveRefresh(): Promise<void> {
+    const apiClient = new ApiClient(API_BASE_URL);
+    try {
+      await apiClient.refreshTokens();
+      console.log('✅ Token refreshed proactively');
+    } catch (error) {
+      console.error('❌ Proactive token refresh failed:', error);
+      // Don't redirect immediately, let the reactive refresh handle it
+    }
   }
 
   setUser(user: any): void {
@@ -57,6 +126,20 @@ class TokenManager {
     if (typeof window === 'undefined') return null;
     const practitioner = localStorage.getItem('practitioner');
     return practitioner ? JSON.parse(practitioner) : null;
+  }
+
+  // Get a promise for token refresh to avoid concurrent refreshes
+  getRefreshPromise(): Promise<boolean> | null {
+    return this.refreshPromise;
+  }
+
+  setRefreshPromise(promise: Promise<boolean> | null): void {
+    this.refreshPromise = promise;
+  }
+
+  // Public method to decode JWT for external use
+  decodeToken(token: string): any {
+    return this.decodeJWT(token);
   }
 }
 
@@ -87,7 +170,35 @@ class ApiClient {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
-    const accessToken = tokenManager.getAccessToken();
+    let accessToken = tokenManager.getAccessToken();
+
+    // Check if token is expired and proactively refresh if needed
+    if (accessToken && tokenManager.isTokenExpired(accessToken, 2)) {
+      // If there's already a refresh in progress, wait for it
+      const existingRefreshPromise = tokenManager.getRefreshPromise();
+      if (existingRefreshPromise) {
+        await existingRefreshPromise;
+        accessToken = tokenManager.getAccessToken();
+      } else {
+        // Start a new refresh
+        const refreshPromise = this.refreshTokens();
+        tokenManager.setRefreshPromise(refreshPromise);
+        try {
+          const refreshed = await refreshPromise;
+          if (refreshed) {
+            accessToken = tokenManager.getAccessToken();
+          } else {
+            tokenManager.clearTokens();
+            if (typeof window !== 'undefined') {
+              window.location.href = '/auth/login';
+            }
+            throw new ApiError(401, 'Token refresh failed');
+          }
+        } finally {
+          tokenManager.setRefreshPromise(null);
+        }
+      }
+    }
 
     const config: RequestInit = {
       headers: {
@@ -112,9 +223,10 @@ class ApiClient {
     try {
       const response = await fetch(url, config);
 
-      // Handle 401 - Token expired
+      // Handle 401 - Token expired (reactive refresh as fallback)
       if (response.status === 401 && accessToken) {
-        const refreshed = await this.refreshToken();
+        console.log('🔄 Reactive token refresh triggered');
+        const refreshed = await this.refreshTokens();
         if (refreshed) {
           // Retry the original request with new token
           const newToken = tokenManager.getAccessToken();
@@ -167,11 +279,13 @@ class ApiClient {
     }
   }
 
-  private async refreshToken(): Promise<boolean> {
+  // Public method for token refresh
+  async refreshTokens(): Promise<boolean> {
     const refreshToken = tokenManager.getRefreshToken();
     if (!refreshToken) return false;
 
     try {
+      console.log('🔄 Refreshing tokens...');
       const response = await fetch(`${this.baseURL}/auth/refresh`, {
         method: 'POST',
         headers: {
@@ -183,12 +297,21 @@ class ApiClient {
       if (response.ok) {
         const data: AuthResponse = await response.json();
         tokenManager.setTokens(data.accessToken, data.refreshToken);
+        console.log('✅ Tokens refreshed successfully');
         return true;
+      } else {
+        console.error('❌ Token refresh failed:', response.status, response.statusText);
+        return false;
       }
-      return false;
-    } catch {
+    } catch (error) {
+      console.error('❌ Token refresh error:', error);
       return false;
     }
+  }
+
+  // Legacy method for backward compatibility
+  private async refreshToken(): Promise<boolean> {
+    return this.refreshTokens();
   }
 
   // HTTP Methods

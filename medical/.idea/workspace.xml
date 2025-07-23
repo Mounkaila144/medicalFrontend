@@ -4,8 +4,45 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="396ef065-e8b6-4286-97d7-6f9dabe520cb" name="Changes" comment="finish">
-      <change beforePath="$PROJECT_DIR$/medicalBackend/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/Dockerfile" afterDir="false" />
+    <list default="true" id="bd1f87ef-70bf-46c1-926c-9b2bd5e121ac" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/medicalBackend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/medicalBackend/src/analytics/controllers/reports.controller.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/analytics/controllers/reports.controller.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/medicalBackend/src/analytics/services/analytics.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/analytics/services/analytics.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/medicalBackend/src/auth/controllers/auth.controller.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/auth/controllers/auth.controller.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/medicalBackend/src/ehr/controllers/prescriptions.controller.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/ehr/controllers/prescriptions.controller.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/medicalBackend/src/ehr/ehr.module.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/ehr/ehr.module.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/medicalBackend/src/ehr/entities/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/ehr/entities/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/medicalBackend/src/ehr/entities/prescription.entity.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/ehr/entities/prescription.entity.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/medicalBackend/src/ehr/services/prescriptions.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/ehr/services/prescriptions.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/medicalBackend/src/patients/controllers/patients.controller.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/patients/controllers/patients.controller.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/medicalBackend/src/patients/dto/create-patient.dto.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/patients/dto/create-patient.dto.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/medicalBackend/src/patients/entities/patient.entity.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/patients/entities/patient.entity.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/medicalBackend/src/patients/services/patients.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/patients/services/patients.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/medicalBackend/src/scheduling/controllers/practitioners.controller.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/scheduling/controllers/practitioners.controller.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/medicalBackend/src/scheduling/controllers/wait-queue.controller.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/scheduling/controllers/wait-queue.controller.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/medicalBackend/src/scheduling/entities/practitioner.entity.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/scheduling/entities/practitioner.entity.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/medicalBackend/src/scheduling/entities/wait-queue-entry.entity.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/scheduling/entities/wait-queue-entry.entity.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/medicalBackend/src/scheduling/scheduling.module.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/scheduling/scheduling.module.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/medicalBackend/src/scheduling/services/practitioners.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/scheduling/services/practitioners.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/medicalBackend/src/scheduling/services/wait-queue.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/scheduling/services/wait-queue.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/medicalBackend/src/schema.gql" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/schema.gql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/medicalBackend/test/patients-mock.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/test/patients-mock.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/medicalFrontend/app/appointments/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/medicalFrontend/app/appointments/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/medicalFrontend/app/dashboard/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/medicalFrontend/app/dashboard/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/medicalFrontend/app/patients/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/medicalFrontend/app/patients/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/medicalFrontend/components/appointments/appointment-calendar-view.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/medicalFrontend/components/appointments/appointment-calendar-view.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/medicalFrontend/components/appointments/appointment-list.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/medicalFrontend/components/appointments/appointment-list.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/medicalFrontend/components/layout/sidebar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/medicalFrontend/components/layout/sidebar.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/medicalFrontend/hooks/useAuth.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalFrontend/hooks/useAuth.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/medicalFrontend/lib/api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalFrontend/lib/api.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/medicalFrontend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/medicalFrontend/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/medicalFrontend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/medicalFrontend/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/medicalFrontend/services/appointment-service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalFrontend/services/appointment-service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/medicalFrontend/services/dashboard-service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalFrontend/services/dashboard-service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/medicalFrontend/types/appointment.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalFrontend/types/appointment.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/medicalFrontend/types/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalFrontend/types/index.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -13,24 +50,12 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="Git.Settings">
-    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/medicalBackend" />
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
   </component>
-  <component name="GitHubPullRequestSearchHistory">{
-  &quot;lastFilter&quot;: {
-    &quot;state&quot;: &quot;OPEN&quot;,
-    &quot;assignee&quot;: &quot;Mounkaila144&quot;
-  }
-}</component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/Mounkaila144/medicalBackend.git&quot;,
-    &quot;accountId&quot;: &quot;5109754d-001c-4744-b21f-3e3134d2b24e&quot;
-  }
-}</component>
-  <component name="ProjectColorInfo">{
-  &quot;associatedIndex&quot;: 2
-}</component>
-  <component name="ProjectId" id="2wrizaO8oIuhjJXny0oPVoJ90Mc" />
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 6
+}]]></component>
+  <component name="ProjectId" id="2zmrczYi2WGpsKkLjZL7Nuj0Vr1" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -39,45 +64,18 @@
   "keyToString": {
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
     "git-widget-placeholder": "main",
     "junie.onboarding.icon.badge.shown": "true",
-    "last_opened_file_path": "/Users/mounkaila/WebstormProjects/medical/medicalFrontend/public/images",
+    "last_opened_file_path": "/Users/mounkaila/WebstormProjects/medical",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "npm.start:dev.executor": "Run",
-    "prettierjs.PrettierConfiguration.Package": "/Users/mounkaila/WebstormProjects/medical/medicalBackend/node_modules/prettier",
-    "settings.editor.selected.configurable": "preferences.pluginManager",
-    "settings.editor.splitter.proportion": "0.15983322",
-    "ts.external.directory.path": "/Users/mounkaila/WebstormProjects/medical/medicalFrontend/node_modules/typescript/lib",
+    "ts.external.directory.path": "/Users/mounkaila/WebstormProjects/medical/medicalBackend/node_modules/typescript/lib",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
-  <component name="RecentsManager">
-    <key name="CopyFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/medicalFrontend/public/images" />
-    </key>
-  </component>
-  <component name="RunManager">
-    <configuration name="start:dev" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
-      <package-json value="$PROJECT_DIR$/package.json" />
-      <command value="run" />
-      <scripts>
-        <script value="start:dev" />
-      </scripts>
-      <node-interpreter value="project" />
-      <envs />
-      <method v="2" />
-    </configuration>
-    <recent_temporary>
-      <list>
-        <item itemvalue="npm.start:dev" />
-      </list>
-    </recent_temporary>
-  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -87,108 +85,16 @@
   </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="396ef065-e8b6-4286-97d7-6f9dabe520cb" name="Changes" comment="" />
-      <created>1746806357353</created>
+      <changelist id="bd1f87ef-70bf-46c1-926c-9b2bd5e121ac" name="Changes" comment="" />
+      <created>1752347173035</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1746806357353</updated>
-      <workItem from="1746806358385" duration="8277000" />
-      <workItem from="1746957412970" duration="7008000" />
-      <workItem from="1747172964305" duration="52000" />
-      <workItem from="1748584846058" duration="8655000" />
-      <workItem from="1748760184622" duration="1743000" />
-      <workItem from="1748890376055" duration="6908000" />
-      <workItem from="1748968302760" duration="2280000" />
-      <workItem from="1749103687343" duration="5040000" />
+      <updated>1752347173035</updated>
+      <workItem from="1752347174098" duration="19638000" />
     </task>
-    <task id="LOCAL-00001" summary="V1">
-      <option name="closed" value="true" />
-      <created>1746957591820</created>
-      <option name="number" value="00001" />
-      <option name="presentableId" value="LOCAL-00001" />
-      <option name="project" value="LOCAL" />
-      <updated>1746957591820</updated>
-    </task>
-    <task id="LOCAL-00002" summary="V2">
-      <option name="closed" value="true" />
-      <created>1747048745691</created>
-      <option name="number" value="00002" />
-      <option name="presentableId" value="LOCAL-00002" />
-      <option name="project" value="LOCAL" />
-      <updated>1747048745691</updated>
-    </task>
-    <task id="LOCAL-00003" summary="V3">
-      <option name="closed" value="true" />
-      <created>1747050499828</created>
-      <option name="number" value="00003" />
-      <option name="presentableId" value="LOCAL-00003" />
-      <option name="project" value="LOCAL" />
-      <updated>1747050499828</updated>
-    </task>
-    <task id="LOCAL-00004" summary="V3">
-      <option name="closed" value="true" />
-      <created>1747050518300</created>
-      <option name="number" value="00004" />
-      <option name="presentableId" value="LOCAL-00004" />
-      <option name="project" value="LOCAL" />
-      <updated>1747050518300</updated>
-    </task>
-    <task id="LOCAL-00005" summary="V4">
-      <option name="closed" value="true" />
-      <created>1748585346175</created>
-      <option name="number" value="00005" />
-      <option name="presentableId" value="LOCAL-00005" />
-      <option name="project" value="LOCAL" />
-      <updated>1748585346176</updated>
-    </task>
-    <task id="LOCAL-00006" summary="claud4 gereate postman">
-      <option name="closed" value="true" />
-      <created>1748588129989</created>
-      <option name="number" value="00006" />
-      <option name="presentableId" value="LOCAL-00006" />
-      <option name="project" value="LOCAL" />
-      <updated>1748588129989</updated>
-    </task>
-    <task id="LOCAL-00007" summary="finish">
-      <option name="closed" value="true" />
-      <created>1748968327063</created>
-      <option name="number" value="00007" />
-      <option name="presentableId" value="LOCAL-00007" />
-      <option name="project" value="LOCAL" />
-      <updated>1748968327063</updated>
-    </task>
-    <task id="LOCAL-00008" summary="finish">
-      <option name="closed" value="true" />
-      <created>1748968338365</created>
-      <option name="number" value="00008" />
-      <option name="presentableId" value="LOCAL-00008" />
-      <option name="project" value="LOCAL" />
-      <updated>1748968338365</updated>
-    </task>
-    <task id="LOCAL-00009" summary="finish">
-      <option name="closed" value="true" />
-      <created>1748968509225</created>
-      <option name="number" value="00009" />
-      <option name="presentableId" value="LOCAL-00009" />
-      <option name="project" value="LOCAL" />
-      <updated>1748968509225</updated>
-    </task>
-    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
-  </component>
-  <component name="VcsManagerConfiguration">
-    <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
-    <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="V1" />
-    <MESSAGE value="V2" />
-    <MESSAGE value="V3" />
-    <MESSAGE value="V4" />
-    <MESSAGE value="claud4 gereate postman" />
-    <MESSAGE value="finish" />
-    <option name="LAST_COMMIT_MESSAGE" value="finish" />
-    <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
 </project>

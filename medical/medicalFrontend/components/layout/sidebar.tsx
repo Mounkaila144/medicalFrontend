@@ -50,10 +50,7 @@ const navigation: NavItem[] = [
   {
     title: 'Patients',
     icon: Users,
-    children: [
-      { title: 'Liste des patients', href: '/patients', icon: Users },
-      { title: 'Nouveau patient', href: '/patients/new', icon: Users },
-    ],
+    href: '/patients'
   },
   {
     title: 'Planification',
@@ -68,7 +65,7 @@ const navigation: NavItem[] = [
     title: 'Praticiens',
     href: '/practitioners',
     icon: UserCheck,
-    roles: ['SUPER_ADMIN', 'CLINIC_ADMIN'],
+    roles: ['SUPERADMIN', 'CLINIC_ADMIN', 'ADMIN'],
   },
   {
     title: 'Consultations',
@@ -107,7 +104,7 @@ const navigation: NavItem[] = [
     title: 'Administration',
     href: '/admin',
     icon: Settings,
-    roles: ['SUPER_ADMIN', 'CLINIC_ADMIN'],
+    roles: ['SUPERADMIN', 'CLINIC_ADMIN', 'ADMIN'],
   },
 ];
 
@@ -173,22 +170,24 @@ export function Sidebar({ open, onOpenChange }: SidebarProps) {
     }
 
     return (
-      <Link key={item.title} href={item.href!}>
-        <Button
-          variant="ghost"
-          className={cn(
-            "w-full justify-start gap-3 px-3 py-2 h-auto font-normal",
-            level > 0 && "ml-4",
-            isActive(item.href!) 
-              ? "bg-blue-100 text-blue-700 border-r-2 border-blue-700" 
-              : "hover:bg-blue-50 hover:text-blue-700"
-          )}
-          onClick={() => onOpenChange(false)}
-        >
+      <Button
+        key={item.title}
+        variant="ghost"
+        className={cn(
+          "w-full justify-start gap-3 px-3 py-2 h-auto font-normal",
+          level > 0 && "ml-4",
+          isActive(item.href!) 
+            ? "bg-blue-100 text-blue-700 border-r-2 border-blue-700" 
+            : "hover:bg-blue-50 hover:text-blue-700"
+        )}
+        onClick={() => onOpenChange(false)}
+        asChild
+      >
+        <Link href={item.href!}>
           <Icon className="h-5 w-5 shrink-0" />
           <span>{item.title}</span>
-        </Button>
-      </Link>
+        </Link>
+      </Button>
     );
   };
 

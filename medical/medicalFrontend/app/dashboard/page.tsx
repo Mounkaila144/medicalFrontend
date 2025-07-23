@@ -17,74 +17,41 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { dashboardService } from '@/services/dashboard-service';
 import Link from 'next/link';
-
-// Mock data - replace with real API calls
-const mockStats = {
-  totalPatients: 1247,
-  todayAppointments: 23,
-  pendingInvoices: 8,
-  monthlyRevenue: 45680,
-  appointmentsByStatus: {
-    SCHEDULED: 15,
-    CONFIRMED: 8,
-    IN_PROGRESS: 2,
-    COMPLETED: 18,
-    CANCELLED: 3,
-  },
-  recentPatients: [
-    { id: '1', name: 'Marie Dubois', lastVisit: '2024-01-15', status: 'active' },
-    { id: '2', name: 'Jean Martin', lastVisit: '2024-01-14', status: 'pending' },
-    { id: '3', name: 'Sophie Laurent', lastVisit: '2024-01-13', status: 'active' },
-  ],
-  upcomingAppointments: [
-    {
-      id: '1',
-      patient: 'Pierre Durand',
-      time: '09:00',
-      practitioner: 'Dr. Smith',
-      type: 'Consultation',
-    },
-    {
-      id: '2',
-      patient: 'Anne Moreau',
-      time: '10:30',
-      practitioner: 'Dr. Johnson',
-      type: 'Suivi',
-    },
-    {
-      id: '3',
-      patient: 'Marc Leroy',
-      time: '14:00',
-      practitioner: 'Dr. Brown',
-      type: 'Urgence',
-    },
-  ],
-  alerts: [
-    {
-      id: '1',
-      type: 'warning',
-      message: '3 factures en retard de paiement',
-      action: 'Voir les factures',
-    },
-    {
-      id: '2',
-      type: 'info',
-      message: '5 nouveaux patients cette semaine',
-      action: 'Voir les patients',
-    },
-  ],
-};
 
 export default function DashboardPage() {
   const { user, practitioner, getDisplayName, isLoading } = useAuth();
-  const [stats, setStats] = useState(mockStats);
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const displayName = getDisplayName();
   const isPractitioner = !!practitioner;
 
-  // Show loading state while auth is initializing
-  if (isLoading) {
+  // Load dashboard data
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      if (!user) return;
+      
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await dashboardService.getDashboardData();
+        setStats(data);
+      } catch (err) {
+        setError('Erreur lors du chargement des données');
+        console.error('Dashboard data loading error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDashboardData();
+  }, [user]);
+
+  // Show loading state while auth is initializing or data is loading
+  if (isLoading || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -95,9 +62,36 @@ export default function DashboardPage() {
     );
   }
 
+  // Show error state
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <p className="text-red-600 mb-4">{error}</p>
+          <Button onClick={() => window.location.reload()}>
+            Réessayer
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // If no data loaded yet
+  if (!stats) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="text-gray-600">Aucune donnée disponible</p>
+        </div>
+      </div>
+    );
+  }
+
   // Calculate completion rate for today's appointments
-  const totalToday = Object.values(stats.appointmentsByStatus).reduce((a, b) => a + b, 0);
-  const completedToday = stats.appointmentsByStatus.COMPLETED;
+  const appointmentsByStatus = stats.appointmentsByStatus || {};
+  const totalToday = Object.values(appointmentsByStatus).reduce((a, b) => (a || 0) + (b || 0), 0);
+  const completedToday = appointmentsByStatus.COMPLETED || 0;
   const completionRate = totalToday > 0 ? (completedToday / totalToday) * 100 : 0;
 
   return (
@@ -113,18 +107,18 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Link href="/patients/new">
-            <Button>
+          <Button asChild>
+            <Link href="/patients/new">
               <Plus className="h-4 w-4 mr-2" />
               Nouveau patient
-            </Button>
-          </Link>
-          <Link href="/appointments">
-            <Button variant="outline">
+            </Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href="/appointments">
               <Calendar className="h-4 w-4 mr-2" />
               Voir le calendrier
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
       </div>
 
@@ -136,7 +130,7 @@ export default function DashboardPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalPatients.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{(stats.totalPatients || 0).toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
               <span className="text-green-600">+12%</span> par rapport au mois dernier
             </p>
@@ -149,9 +143,9 @@ export default function DashboardPage() {
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.todayAppointments}</div>
+            <div className="text-2xl font-bold">{stats.appointmentsToday || 0}</div>
             <p className="text-xs text-muted-foreground">
-              {completedToday} terminés, {stats.appointmentsByStatus.SCHEDULED + stats.appointmentsByStatus.CONFIRMED} à venir
+              {completedToday} terminés, {(appointmentsByStatus.SCHEDULED || 0) + (appointmentsByStatus.CONFIRMED || 0)} à venir
             </p>
           </CardContent>
         </Card>
@@ -162,7 +156,7 @@ export default function DashboardPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.monthlyRevenue.toLocaleString()} €</div>
+            <div className="text-2xl font-bold">{(stats.monthlyRevenue || 0).toLocaleString()} €</div>
             <p className="text-xs text-muted-foreground">
               <span className="text-green-600">+8%</span> par rapport au mois dernier
             </p>
@@ -175,7 +169,7 @@ export default function DashboardPage() {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.pendingInvoices}</div>
+            <div className="text-2xl font-bold">{stats.pendingInvoices || 0}</div>
             <p className="text-xs text-muted-foreground">
               À traiter rapidement
             </p>
@@ -184,9 +178,9 @@ export default function DashboardPage() {
       </div>
 
       {/* Alerts */}
-      {stats.alerts.length > 0 && (
+      {(stats.alerts || []).length > 0 && (
         <div className="space-y-2">
-          {stats.alerts.map((alert) => (
+          {(stats.alerts || []).map((alert) => (
             <Card key={alert.id} className="border-l-4 border-l-orange-500">
               <CardContent className="flex items-center justify-between p-4">
                 <div className="flex items-center gap-3">
@@ -224,11 +218,11 @@ export default function DashboardPage() {
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <p className="text-muted-foreground">En cours</p>
-                <p className="font-semibold">{stats.appointmentsByStatus.IN_PROGRESS}</p>
+                <p className="font-semibold">{appointmentsByStatus.IN_PROGRESS || 0}</p>
               </div>
               <div>
                 <p className="text-muted-foreground">Annulés</p>
-                <p className="font-semibold">{stats.appointmentsByStatus.CANCELLED}</p>
+                <p className="font-semibold">{appointmentsByStatus.CANCELLED || 0}</p>
               </div>
             </div>
           </CardContent>
@@ -245,7 +239,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {stats.upcomingAppointments.map((appointment) => (
+              {(stats.upcomingAppointments || []).slice(0, 3).map((appointment) => (
                 <div key={appointment.id} className="flex items-center justify-between p-2 rounded-lg bg-gray-50">
                   <div>
                     <p className="font-medium text-sm">{appointment.patient}</p>
@@ -256,47 +250,59 @@ export default function DashboardPage() {
                   <Badge variant="outline">{appointment.time}</Badge>
                 </div>
               ))}
+              {(stats.upcomingAppointments || []).length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  Aucun rendez-vous programmé aujourd'hui
+                </p>
+              )}
             </div>
-            <Link href="/appointments">
-              <Button variant="ghost" className="w-full mt-4">
+            <Button variant="ghost" className="w-full mt-4" asChild>
+              <Link href="/appointments">
                 Voir tous les RDV
                 <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </CardContent>
         </Card>
 
-        {/* Recent Patients */}
+        {/* Recent Appointments */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
-              Patients Récents
+              Rendez-vous Récents
             </CardTitle>
-            <CardDescription>Dernières activités patients</CardDescription>
+            <CardDescription>Derniers rendez-vous</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {stats.recentPatients.map((patient) => (
-                <div key={patient.id} className="flex items-center justify-between p-2 rounded-lg bg-gray-50">
+              {(stats.recentAppointments || []).slice(0, 3).map((appointment) => (
+                <div key={appointment.id} className="flex items-center justify-between p-2 rounded-lg bg-gray-50">
                   <div>
-                    <p className="font-medium text-sm">{patient.name}</p>
+                    <p className="font-medium text-sm">{appointment.patientName}</p>
                     <p className="text-xs text-muted-foreground">
-                      Dernière visite: {new Date(patient.lastVisit).toLocaleDateString('fr-FR')}
+                      {appointment.purpose} • {new Date(appointment.time).toLocaleDateString('fr-FR')}
                     </p>
                   </div>
-                  <Badge variant={patient.status === 'active' ? 'default' : 'secondary'}>
-                    {patient.status === 'active' ? 'Actif' : 'En attente'}
+                  <Badge variant={appointment.status === 'completed' ? 'default' : 'secondary'}>
+                    {appointment.status === 'completed' ? 'Terminé' : 
+                     appointment.status === 'scheduled' ? 'Programmé' : 
+                     appointment.status === 'cancelled' ? 'Annulé' : appointment.status}
                   </Badge>
                 </div>
               ))}
+              {(stats.recentAppointments || []).length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  Aucun rendez-vous récent
+                </p>
+              )}
             </div>
-            <Link href="/patients">
-              <Button variant="ghost" className="w-full mt-4">
-                Voir tous les patients
+            <Button variant="ghost" className="w-full mt-4" asChild>
+              <Link href="/appointments">
+                Voir tous les RDV
                 <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -309,30 +315,30 @@ export default function DashboardPage() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Link href="/patients/new">
-              <Button variant="outline" className="w-full h-20 flex-col gap-2">
+            <Button variant="outline" className="w-full h-20 flex-col gap-2" asChild>
+              <Link href="/patients/new">
                 <Users className="h-6 w-6" />
                 Nouveau Patient
-              </Button>
-            </Link>
-            <Link href="/appointments">
-              <Button variant="outline" className="w-full h-20 flex-col gap-2">
+              </Link>
+            </Button>
+            <Button variant="outline" className="w-full h-20 flex-col gap-2" asChild>
+              <Link href="/appointments">
                 <Calendar className="h-6 w-6" />
                 Planifier RDV
-              </Button>
-            </Link>
-            <Link href="/encounters">
-              <Button variant="outline" className="w-full h-20 flex-col gap-2">
+              </Link>
+            </Button>
+            <Button variant="outline" className="w-full h-20 flex-col gap-2" asChild>
+              <Link href="/encounters">
                 <FileText className="h-6 w-6" />
                 Nouvelle Consultation
-              </Button>
-            </Link>
-            <Link href="/billing/invoices">
-              <Button variant="outline" className="w-full h-20 flex-col gap-2">
+              </Link>
+            </Button>
+            <Button variant="outline" className="w-full h-20 flex-col gap-2" asChild>
+              <Link href="/billing/invoices">
                 <DollarSign className="h-6 w-6" />
                 Créer Facture
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
         </CardContent>
       </Card>

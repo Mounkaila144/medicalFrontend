@@ -1,16 +1,34 @@
-export type AppointmentStatus = "scheduled" | "completed" | "canceled" | "no-show";
+export type AppointmentStatus = "SCHEDULED" | "CONFIRMED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "NO_SHOW";
 
 export interface Appointment {
   id: string;
   patientId: string;
-  patientName: string;
-  doctorId: string;
-  doctorName: string;
-  startTime: string;
-  endTime: string;
-  purpose: string;
+  practitionerId: string;
+  startAt: string;
+  endAt: string;
+  room?: string;
+  reason: string;
+  urgency: "LOW" | "NORMAL" | "HIGH" | "URGENT";
   status: AppointmentStatus;
-  notes?: string;
-  createdAt: string;
-  updatedAt: string;
+  cancellationReason?: string;
+  patient?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    mrn: string;
+  };
+  practitioner?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    speciality: string;
+  };
+  // Legacy fields for compatibility
+  patientName?: string;
+  doctorName?: string;
+  startTime?: string;
+  endTime?: string;
+  purpose?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
