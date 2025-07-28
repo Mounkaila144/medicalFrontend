@@ -4,45 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bd1f87ef-70bf-46c1-926c-9b2bd5e121ac" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+    <list default="true" id="bd1f87ef-70bf-46c1-926c-9b2bd5e121ac" name="Changes" comment="edit">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/medicalBackend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/medicalBackend/src/analytics/controllers/reports.controller.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/analytics/controllers/reports.controller.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/medicalBackend/src/analytics/services/analytics.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/analytics/services/analytics.service.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/medicalBackend/src/auth/controllers/auth.controller.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/auth/controllers/auth.controller.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/medicalBackend/src/ehr/controllers/prescriptions.controller.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/ehr/controllers/prescriptions.controller.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/medicalBackend/src/ehr/ehr.module.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/ehr/ehr.module.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/medicalBackend/src/ehr/entities/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/ehr/entities/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/medicalBackend/src/ehr/entities/prescription.entity.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/ehr/entities/prescription.entity.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/medicalBackend/src/ehr/services/prescriptions.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/ehr/services/prescriptions.service.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/medicalBackend/src/patients/controllers/patients.controller.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/patients/controllers/patients.controller.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/medicalBackend/src/patients/dto/create-patient.dto.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/patients/dto/create-patient.dto.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/medicalBackend/src/patients/entities/patient.entity.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/patients/entities/patient.entity.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/medicalBackend/src/patients/services/patients.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/patients/services/patients.service.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/medicalBackend/src/scheduling/controllers/practitioners.controller.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/scheduling/controllers/practitioners.controller.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/medicalBackend/src/scheduling/controllers/wait-queue.controller.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/scheduling/controllers/wait-queue.controller.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/medicalBackend/src/scheduling/entities/practitioner.entity.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/scheduling/entities/practitioner.entity.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/medicalBackend/src/scheduling/entities/wait-queue-entry.entity.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/scheduling/entities/wait-queue-entry.entity.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/medicalBackend/src/scheduling/scheduling.module.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/scheduling/scheduling.module.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/medicalBackend/src/scheduling/services/practitioners.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/scheduling/services/practitioners.service.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/medicalBackend/src/scheduling/services/wait-queue.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/scheduling/services/wait-queue.service.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/medicalBackend/src/schema.gql" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/src/schema.gql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/medicalBackend/test/patients-mock.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalBackend/test/patients-mock.service.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/medicalFrontend/app/appointments/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/medicalFrontend/app/appointments/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/medicalFrontend/app/dashboard/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/medicalFrontend/app/dashboard/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/medicalFrontend/app/patients/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/medicalFrontend/app/patients/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/medicalFrontend/components/appointments/appointment-calendar-view.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/medicalFrontend/components/appointments/appointment-calendar-view.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/medicalFrontend/components/appointments/appointment-list.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/medicalFrontend/components/appointments/appointment-list.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/medicalFrontend/components/layout/sidebar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/medicalFrontend/components/layout/sidebar.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/medicalFrontend/hooks/useAuth.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalFrontend/hooks/useAuth.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/medicalFrontend/lib/api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalFrontend/lib/api.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/medicalFrontend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/medicalFrontend/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/medicalFrontend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/medicalFrontend/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/medicalFrontend/services/appointment-service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalFrontend/services/appointment-service.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/medicalFrontend/services/dashboard-service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalFrontend/services/dashboard-service.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/medicalFrontend/types/appointment.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalFrontend/types/appointment.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/medicalFrontend/types/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/medicalFrontend/types/index.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -50,11 +13,11 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="Git.Settings">
-    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/medicalBackend" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 6
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 6
+}</component>
   <component name="ProjectId" id="2zmrczYi2WGpsKkLjZL7Nuj0Vr1" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -72,6 +35,8 @@
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
+    "prettierjs.PrettierConfiguration.Package": "/Users/mounkaila/WebstormProjects/medical/medicalBackend/node_modules/prettier",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
     "ts.external.directory.path": "/Users/mounkaila/WebstormProjects/medical/medicalBackend/node_modules/typescript/lib",
     "vue.rearranger.settings.migration": "true"
   }
@@ -91,10 +56,44 @@
       <option name="presentableId" value="Default" />
       <updated>1752347173035</updated>
       <workItem from="1752347174098" duration="19638000" />
+      <workItem from="1753273904156" duration="3533000" />
+      <workItem from="1753277450659" duration="13384000" />
     </task>
+    <task id="LOCAL-00001" summary="edit">
+      <option name="closed" value="true" />
+      <created>1753274018647</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1753274018647</updated>
+    </task>
+    <task id="LOCAL-00002" summary="edit">
+      <option name="closed" value="true" />
+      <created>1753351513341</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1753351513341</updated>
+    </task>
+    <task id="LOCAL-00003" summary="edit">
+      <option name="closed" value="true" />
+      <created>1753351528881</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1753351528881</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
+    <option name="CHECK_NEW_TODO" value="false" />
+    <MESSAGE value="edit" />
+    <option name="LAST_COMMIT_MESSAGE" value="edit" />
+    <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
 </project>
